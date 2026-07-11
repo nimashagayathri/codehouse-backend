@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Dilni Thisaree\\Downloads\\RecruitmentPlatform.API\\RecruitmentPlatform.API\\RecruitmentPlatform.API.csproj": {}
+    "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend\\RecruitmentPlatform.API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Dilni Thisaree\\Downloads\\RecruitmentPlatform.API\\RecruitmentPlatform.API\\RecruitmentPlatform.API.csproj": {
+    "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend\\RecruitmentPlatform.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Dilni Thisaree\\Downloads\\RecruitmentPlatform.API\\RecruitmentPlatform.API\\RecruitmentPlatform.API.csproj",
+        "projectUniqueName": "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend\\RecruitmentPlatform.API.csproj",
         "projectName": "RecruitmentPlatform.API",
-        "projectPath": "C:\\Users\\Dilni Thisaree\\Downloads\\RecruitmentPlatform.API\\RecruitmentPlatform.API\\RecruitmentPlatform.API.csproj",
-        "packagesPath": "C:\\Users\\Dilni Thisaree\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Dilni Thisaree\\Downloads\\RecruitmentPlatform.API\\RecruitmentPlatform.API\\obj\\",
+        "projectPath": "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend\\RecruitmentPlatform.API.csproj",
+        "packagesPath": "C:\\Users\\This PC\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Dilni Thisaree\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\This PC\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -101,7 +101,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
