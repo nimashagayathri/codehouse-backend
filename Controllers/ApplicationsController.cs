@@ -16,13 +16,16 @@ namespace RecruitmentPlatform.API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly AiMatchingService _aiMatchingService;
+        private readonly IEmailService _emailService;
 
         public ApplicationsController(
             ApplicationDbContext context,
-            AiMatchingService aiMatchingService)
+            AiMatchingService aiMatchingService,
+            IEmailService emailService)
         {
             _context = context;
             _aiMatchingService = aiMatchingService;
+            _emailService = emailService;
         }
 
         [Authorize(Roles = UserRoles.Candidate)]
@@ -90,6 +93,22 @@ namespace RecruitmentPlatform.API.Controllers
                 .Include(a => a.CandidateProfile)
                 .ThenInclude(c => c!.User)
                 .FirstAsync(a => a.Id == application.Id);
+
+            // Send Email Notification (Communication Services)
+            string candidateEmail = application.CandidateProfile?.User?.Email ?? "candidate@example.com";
+            string employerEmail = application.JobPosting?.Recruiter?.Email ?? "company@example.com";
+            
+            _ = _emailService.SendEmailAsync(
+                candidateEmail,
+                $"Application Submitted: {job.Title}",
+                $"Dear {application.CandidateProfile?.User?.FullName},\n\nYour application for {job.Title} has been received successfully.\nBased on your profile, our AI Matching algorithm assigned a match score of {matchScore:F1}%.\n\nThank you,\n{job.Recruiter?.FullName ?? "The Recruitment Team"}"
+            );
+
+            _ = _emailService.SendEmailAsync(
+                employerEmail,
+                $"New Applicant for {job.Title}",
+                $"A new candidate ({application.CandidateProfile?.User?.FullName}) has applied for {job.Title}.\nThey achieved an AI match score of {matchScore:F1}%.\n\nPlease review their application on the portal."
+            );
 
             return Ok(new
             {

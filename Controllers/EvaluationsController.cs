@@ -6,6 +6,7 @@ using RecruitmentPlatform.API.Data;
 using RecruitmentPlatform.API.DTOs.Evaluations;
 using RecruitmentPlatform.API.Helpers;
 using RecruitmentPlatform.API.Models;
+using RecruitmentPlatform.API.Services;
 
 namespace RecruitmentPlatform.API.Controllers
 {
@@ -14,13 +15,17 @@ namespace RecruitmentPlatform.API.Controllers
     public class EvaluationsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public EvaluationsController(ApplicationDbContext context)
+        public EvaluationsController(
+            ApplicationDbContext context,
+            IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
-        [Authorize(Roles = "HiringManager,Admin")]
+        [Authorize(Roles = "HiringManager,Admin,Recruiter")]
         [HttpPost]
         public async Task<IActionResult> CreateEvaluation(CreateEvaluationRequest request)
         {
@@ -92,6 +97,16 @@ namespace RecruitmentPlatform.API.Controllers
                 .ThenInclude(c => c!.User)
                 .FirstAsync(e => e.Id == evaluation.Id);
 
+            string candidateEmail = evaluation.JobApplication?.CandidateProfile?.User?.Email ?? "";
+            if (!string.IsNullOrEmpty(candidateEmail))
+            {
+                _ = _emailService.SendEmailAsync(
+                    candidateEmail,
+                    $"Application Status Update: {evaluation.JobApplication?.JobPosting?.Title}",
+                    $"Your application status has been updated to: {normalizedDecision}.\nFeedback: {request.Feedback}\nScore: {evaluation.OverallScore:F1}/100"
+                );
+            }
+
             return Ok(new
             {
                 message = "Candidate evaluation created successfully.",
@@ -131,7 +146,7 @@ namespace RecruitmentPlatform.API.Controllers
             return Ok(MapToResponse(evaluation));
         }
 
-        [Authorize(Roles = "HiringManager,Admin")]
+        [Authorize(Roles = "HiringManager,Admin,Recruiter")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateEvaluation(
             int id,
@@ -195,6 +210,16 @@ namespace RecruitmentPlatform.API.Controllers
                 .ThenInclude(a => a!.CandidateProfile)
                 .ThenInclude(c => c!.User)
                 .FirstAsync(e => e.Id == id);
+
+            string candidateEmail = evaluation.JobApplication?.CandidateProfile?.User?.Email ?? "";
+            if (!string.IsNullOrEmpty(candidateEmail))
+            {
+                _ = _emailService.SendEmailAsync(
+                    candidateEmail,
+                    $"Application Status Update: {evaluation.JobApplication?.JobPosting?.Title}",
+                    $"Your application status has been updated to: {normalizedDecision}.\nFeedback: {request.Feedback}\nScore: {evaluation.OverallScore:F1}/100"
+                );
+            }
 
             return Ok(new
             {
