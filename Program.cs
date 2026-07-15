@@ -30,9 +30,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add CORS for React frontend
 builder.Services.AddCors(options =>
 {
+    // Added both named and default policies to ensure it works anywhere
     options.AddPolicy("ReactPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -108,6 +115,12 @@ builder.Services.AddScoped<IEmailService, MockEmailService>();
 
 var app = builder.Build();
 
+app.UseRouting();
+
+// ✅ CORS must be FIRST - before Swagger, auth, everything
+app.UseCors();
+app.UseCors("ReactPolicy");
+
 // Enable Swagger
 app.UseSwagger();
 
@@ -121,8 +134,6 @@ app.UseSwaggerUI(options =>
 // app.UseHttpsRedirection();
 
 app.UseStaticFiles();
-
-app.UseCors("ReactPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
