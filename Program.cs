@@ -7,8 +7,6 @@ using RecruitmentPlatform.API.Data;
 using RecruitmentPlatform.API.Services;
 using Microsoft.Extensions.FileProviders;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add controllers
@@ -37,6 +35,7 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
+
     options.AddDefaultPolicy(policy =>
     {
         policy.AllowAnyOrigin()
@@ -84,8 +83,6 @@ builder.Services.AddAuthorization();
 // Add Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -110,8 +107,12 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Register Application Services
 builder.Services.AddScoped<AiMatchingService>();
 builder.Services.AddScoped<IEmailService, MockEmailService>();
+
+// ✅ Google Calendar Service (Ashini's Contribution Only)
+builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 
 var app = builder.Build();
 
