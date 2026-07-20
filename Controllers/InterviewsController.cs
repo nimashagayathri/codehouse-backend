@@ -6,6 +6,7 @@ using RecruitmentPlatform.API.Data;
 using RecruitmentPlatform.API.DTOs.Interviews;
 using RecruitmentPlatform.API.Helpers;
 using RecruitmentPlatform.API.Models;
+using RecruitmentPlatform.API.Services;
 
 namespace RecruitmentPlatform.API.Controllers
 {
@@ -14,10 +15,12 @@ namespace RecruitmentPlatform.API.Controllers
     public class InterviewsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public InterviewsController(ApplicationDbContext context)
+        public InterviewsController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [Authorize(Roles = "Recruiter,Admin")]
@@ -87,6 +90,15 @@ namespace RecruitmentPlatform.API.Controllers
                 .ThenInclude(a => a!.CandidateProfile)
                 .ThenInclude(c => c!.User)
                 .FirstAsync(i => i.Id == interview.Id);
+
+            // Send Email with Calendar invite
+            string candidateEmail = application.CandidateProfile?.User?.Email ?? "";
+            if (!string.IsNullOrEmpty(candidateEmail))
+            {
+                string icsContent = GenerateIcsContent(interview, application);
+                string body = $"Dear {application.CandidateProfile?.User?.FullName},\n\nYour interview for {application.JobPosting?.Title} is scheduled on {interview.InterviewDate}.\n\nPlease find the calendar invite attached.\n\nLocation/Link: {interview.Location} - {interview.MeetingLink}\nNotes: {interview.Notes}";
+                await _emailService.SendEmailAsync(candidateEmail, "Interview Scheduled", body, icsContent);
+            }
 
             return Ok(new
             {
@@ -263,6 +275,25 @@ namespace RecruitmentPlatform.API.Controllers
                 return application.JobPosting?.RecruiterId == userId;
 
             return false;
+        }
+
+        private string GenerateIcsContent(Interview interview, JobApplication application)
+        {
+            string start = interview.InterviewDate.ToString("yyyyMMddTHHmmssZ");
+            string end = interview.InterviewDate.AddHours(1).ToString("yyyyMMddTHHmmssZ");
+            
+            return $@"BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//CodeHouse//Recruitment Platform//EN
+BEGIN:VEVENT
+UID:{Guid.NewGuid()}
+DTSTAMP:{DateTime.UtcNow:yyyyMMddTHHmmssZ}
+DTSTART:{start}
+DTEND:{end}
+SUMMARY:Interview for {application.JobPosting?.Title}
+DESCRIPTION:Mode: {interview.Mode}\nLocation: {interview.MeetingLink} {interview.Location}
+END:VEVENT
+END:VCALENDAR";
         }
 
         private static InterviewResponse MapToResponse(Interview interview)
