@@ -7,8 +7,6 @@ using RecruitmentPlatform.API.Data;
 using RecruitmentPlatform.API.Services;
 using Microsoft.Extensions.FileProviders;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add controllers
@@ -30,13 +28,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add CORS for React frontend
 builder.Services.AddCors(options =>
 {
-    // Added both named and default policies to ensure it works anywhere
     options.AddPolicy("ReactPolicy", policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
+
     options.AddDefaultPolicy(policy =>
     {
         policy.AllowAnyOrigin()
@@ -84,8 +82,6 @@ builder.Services.AddAuthorization();
 // Add Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -110,14 +106,18 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Register Application Services
 builder.Services.AddScoped<AiMatchingService>();
-builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+
+// ✅ Register Real SMTP Email Service (Suhansa's Feature - Replacing MockEmailService)
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 
 app.UseRouting();
 
-// ✅ CORS must be FIRST - before Swagger, auth, everything
+// CORS must be FIRST - before Swagger, auth, everything
 app.UseCors();
 app.UseCors("ReactPolicy");
 
@@ -129,9 +129,6 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "Recruitment Platform API v1");
     options.RoutePrefix = "swagger";
 });
-
-// Keep HTTPS redirection disabled while testing locally with HTTP/Postman
-// app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 

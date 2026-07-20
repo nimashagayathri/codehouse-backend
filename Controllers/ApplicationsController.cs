@@ -94,21 +94,48 @@ namespace RecruitmentPlatform.API.Controllers
                 .ThenInclude(c => c!.User)
                 .FirstAsync(a => a.Id == application.Id);
 
-            // Send Email Notification (Communication Services)
-            string candidateEmail = application.CandidateProfile?.User?.Email ?? "candidate@example.com";
-            string employerEmail = application.JobPosting?.Recruiter?.Email ?? "company@example.com";
-            
-            _ = _emailService.SendEmailAsync(
-                candidateEmail,
-                $"Application Submitted: {job.Title}",
-                $"Dear {application.CandidateProfile?.User?.FullName},\n\nYour application for {job.Title} has been received successfully.\nBased on your profile, our AI Matching algorithm assigned a match score of {matchScore:F1}%.\n\nThank you,\n{job.Recruiter?.FullName ?? "The Recruitment Team"}"
-            );
+            // ✅ Send Email Notifications via Suhansa's Email Service
+            string candidateEmail = application.CandidateProfile?.User?.Email ?? string.Empty;
+            string employerEmail = application.JobPosting?.Recruiter?.Email ?? string.Empty;
+            string candidateName = application.CandidateProfile?.User?.FullName ?? "Candidate";
+            string jobTitle = job.Title;
 
-            _ = _emailService.SendEmailAsync(
-                employerEmail,
-                $"New Applicant for {job.Title}",
-                $"A new candidate ({application.CandidateProfile?.User?.FullName}) has applied for {job.Title}.\nThey achieved an AI match score of {matchScore:F1}%.\n\nPlease review their application on the portal."
-            );
+            if (!string.IsNullOrWhiteSpace(candidateEmail))
+            {
+                string candidateHtmlBody = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;'>
+                        <div style='background-color: #1e293b; padding: 20px; text-align: center; color: white;'>
+                            <h2 style='margin: 0;'>CodeHouse Recruitment Portal</h2>
+                        </div>
+                        <div style='padding: 24px; color: #334155;'>
+                            <p>Dear <strong>{candidateName}</strong>,</p>
+                            <p>Your application for <strong>{jobTitle}</strong> has been received successfully.</p>
+                            <p>Based on your profile skills, our AI Matching algorithm assigned a match score of <strong>{matchScore:F1}%</strong>.</p>
+                            <br/>
+                            <p>Thank you,<br/><strong>{job.Recruiter?.FullName ?? "The Recruitment Team"}</strong></p>
+                        </div>
+                    </div>";
+
+                await _emailService.SendEmailAsync(candidateEmail, $"Application Submitted: {jobTitle}", candidateHtmlBody);
+            }
+
+            if (!string.IsNullOrWhiteSpace(employerEmail))
+            {
+                string employerHtmlBody = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;'>
+                        <div style='background-color: #2563eb; padding: 20px; text-align: center; color: white;'>
+                            <h2 style='margin: 0;'>New Applicant Notification</h2>
+                        </div>
+                        <div style='padding: 24px; color: #334155;'>
+                            <p>Hello,</p>
+                            <p>A new candidate (<strong>{candidateName}</strong>) has applied for <strong>{jobTitle}</strong>.</p>
+                            <p><strong>AI Match Score:</strong> {matchScore:F1}%</p>
+                            <p>Please review their application on the portal dashboard.</p>
+                        </div>
+                    </div>";
+
+                await _emailService.SendEmailAsync(employerEmail, $"New Applicant for {jobTitle}", employerHtmlBody);
+            }
 
             return Ok(new
             {
@@ -253,6 +280,21 @@ namespace RecruitmentPlatform.API.Controllers
             application.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            // ✅ Send Application Status Update Email (Suhansa's Email Service)
+            string candidateEmail = application.CandidateProfile?.User?.Email ?? string.Empty;
+            string candidateName = application.CandidateProfile?.User?.FullName ?? "Candidate";
+            string jobTitle = application.JobPosting?.Title ?? "Position";
+
+            if (!string.IsNullOrWhiteSpace(candidateEmail))
+            {
+                await _emailService.SendApplicationStatusUpdateEmailAsync(
+                    candidateEmail,
+                    candidateName,
+                    jobTitle,
+                    normalizedStatus
+                );
+            }
 
             return Ok(new
             {
