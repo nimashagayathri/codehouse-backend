@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\SUHANSA\\Documents\\GitHub\\codehouse-backend\\RecruitmentPlatform.API.csproj": {}
+    "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend-new\\RecruitmentPlatform.API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\SUHANSA\\Documents\\GitHub\\codehouse-backend\\RecruitmentPlatform.API.csproj": {
+    "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend-new\\RecruitmentPlatform.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\SUHANSA\\Documents\\GitHub\\codehouse-backend\\RecruitmentPlatform.API.csproj",
+        "projectUniqueName": "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend-new\\RecruitmentPlatform.API.csproj",
         "projectName": "RecruitmentPlatform.API",
-        "projectPath": "C:\\Users\\SUHANSA\\Documents\\GitHub\\codehouse-backend\\RecruitmentPlatform.API.csproj",
-        "packagesPath": "C:\\Users\\SUHANSA\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\SUHANSA\\Documents\\GitHub\\codehouse-backend\\obj\\",
+        "projectPath": "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend-new\\RecruitmentPlatform.API.csproj",
+        "packagesPath": "C:\\Users\\This PC\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\This PC\\OneDrive\\Documents\\GitHub\\codehouse-backend-new\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\SUHANSA\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\This PC\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -57,10 +57,6 @@
               "target": "Package",
               "version": "[4.2.0, )"
             },
-            "MailKit": {
-              "target": "Package",
-              "version": "[4.17.0, )"
-            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[9.0.0, )"
@@ -88,6 +84,10 @@
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[10.1.1, )"
+            },
+            "itext7": {
+              "target": "Package",
+              "version": "[9.7.0, )"
             }
           },
           "imports": [
@@ -109,7 +109,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.302/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
