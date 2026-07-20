@@ -9,6 +9,7 @@ using RecruitmentPlatform.API.Data;
 using RecruitmentPlatform.API.DTOs.Auth;
 using RecruitmentPlatform.API.Helpers;
 using RecruitmentPlatform.API.Models;
+using RecruitmentPlatform.API.Services;
 
 namespace RecruitmentPlatform.API.Controllers
 {
@@ -19,11 +20,13 @@ namespace RecruitmentPlatform.API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-        public AuthController(ApplicationDbContext context, IConfiguration configuration)
+        public AuthController(ApplicationDbContext context, IConfiguration configuration, IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         [HttpPost("register")]
@@ -130,6 +133,97 @@ namespace RecruitmentPlatform.API.Controllers
             };
 
             return Ok(response);
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email.Trim().ToLower());
+            if (user == null)
+            {
+                return Ok(new { message = "If this email exists, a password reset link has been sent." });
+            }
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim("Purpose", "ResetPassword")
+                }),
+                Expires = DateTime.UtcNow.AddMinutes(15),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                Issuer = _configuration["Jwt:Issuer"],
+                Audience = _configuration["Jwt:Audience"]
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            var resetLink = $"http://localhost:3000/reset-password?token={tokenString}";
+            string body = $@"Dear {user.FullName},
+
+You requested to reset your password on CodeHouse API.
+Please click the link below to set a new password. This link will expire in 15 minutes.
+
+{resetLink}
+
+If you didn't request this, please ignore this email.
+
+Thanks,
+CodeHouse Team";
+
+            try {
+                await _emailService.SendEmailAsync(user.Email, "Reset Your CodeHouse Password", body);
+            } catch (Exception ex) {
+                Console.WriteLine($"[Email Error] {ex.Message}");
+            }
+
+            return Ok(new { message = "If this email exists, a password reset link has been sent." });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!);
+
+            try
+            {
+                tokenHandler.ValidateToken(request.Token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = _configuration["Jwt:Audience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                var jwtToken = (JwtSecurityToken)validatedToken;
+                
+                var purpose = jwtToken.Claims.FirstOrDefault(x => x.Type == "Purpose")?.Value;
+                if (purpose != "ResetPassword") return BadRequest(new { message = "Invalid token type." });
+
+                var userIdStr = jwtToken.Claims.First(x => x.Type == "nameid").Value;
+                int userId = int.Parse(userIdStr);
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null) return BadRequest(new { message = "User not found." });
+
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Password updated successfully." });
+            }
+            catch
+            {
+                return BadRequest(new { message = "Invalid or expired password reset token." });
+            }
         }
 
         [Authorize]
