@@ -156,3 +156,4 @@ C:\Users\This PC\OneDrive\Documents\GitHub\codehouse-backend-new\obj\Debug\net10
 C:\Users\This PC\OneDrive\Documents\GitHub\codehouse-backend-new\obj\Debug\net10.0\RecruitmentPlatform.API.pdb
 C:\Users\This PC\OneDrive\Documents\GitHub\codehouse-backend-new\obj\Debug\net10.0\RecruitmentPlatform.API.genruntimeconfig.cache
 C:\Users\This PC\OneDrive\Documents\GitHub\codehouse-backend-new\obj\Debug\net10.0\ref\RecruitmentPlatform.API.dll
+C:\Users\This PC\OneDrive\Documents\GitHub\codehouse-backend-new\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
