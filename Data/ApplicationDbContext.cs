@@ -22,6 +22,9 @@ namespace RecruitmentPlatform.API.Data
 
         public DbSet<CandidateEvaluation> CandidateEvaluations { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        
+        public DbSet<Organization> Organizations { get; set; }
+        public DbSet<Department> Departments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

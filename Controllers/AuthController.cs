@@ -14,6 +14,7 @@ namespace RecruitmentPlatform.API.Controllers
 {
     [ApiController]
     [Route("api/auth")]
+    [Microsoft.AspNetCore.Cors.EnableCors("ReactPolicy")]
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -77,10 +78,13 @@ namespace RecruitmentPlatform.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
+            Console.WriteLine("Login: Starting login request...");
             string email = request.Email.Trim().ToLower();
 
+            Console.WriteLine("Login: Fetching user...");
             User? user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == email);
+            Console.WriteLine("Login: User fetched. user null? " + (user == null));
 
             if (user == null)
             {
@@ -90,7 +94,9 @@ namespace RecruitmentPlatform.API.Controllers
                 });
             }
 
+            Console.WriteLine("Login: Verifying password...");
             bool passwordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+            Console.WriteLine("Login: Password valid? " + passwordValid);
 
             if (!passwordValid)
             {
@@ -100,6 +106,8 @@ namespace RecruitmentPlatform.API.Controllers
                 });
             }
 
+            Console.WriteLine("Login: Checking active status...");
+
             if (!user.IsActive)
             {
                 return StatusCode(403, new
@@ -108,7 +116,9 @@ namespace RecruitmentPlatform.API.Controllers
                 });
             }
 
+            Console.WriteLine("Login: Generating JWT token...");
             string token = GenerateJwtToken(user);
+            Console.WriteLine("Login: Token generated successfully.");
 
             AuthResponse response = new AuthResponse
             {

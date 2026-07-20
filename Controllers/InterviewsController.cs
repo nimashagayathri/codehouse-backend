@@ -6,6 +6,7 @@ using RecruitmentPlatform.API.Data;
 using RecruitmentPlatform.API.DTOs.Interviews;
 using RecruitmentPlatform.API.Helpers;
 using RecruitmentPlatform.API.Models;
+using RecruitmentPlatform.API.Services;
 
 namespace RecruitmentPlatform.API.Controllers
 {
@@ -14,10 +15,14 @@ namespace RecruitmentPlatform.API.Controllers
     public class InterviewsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IGoogleCalendarService _calendarService; // ← Ashini's Google Calendar Service
 
-        public InterviewsController(ApplicationDbContext context)
+        public InterviewsController(
+            ApplicationDbContext context,
+            IGoogleCalendarService calendarService) // ← Injected for Ashini
         {
             _context = context;
+            _calendarService = calendarService;
         }
 
         [Authorize(Roles = "Recruiter,Admin")]
@@ -55,13 +60,33 @@ namespace RecruitmentPlatform.API.Controllers
                 });
             }
 
+            string candidateEmail = application.CandidateProfile?.User?.Email ?? string.Empty;
+            string candidateName = application.CandidateProfile?.User?.FullName ?? "Candidate";
+            string jobTitle = application.JobPosting?.Title ?? "Position";
+            string recruiterEmail = application.JobPosting?.Recruiter?.Email ?? string.Empty;
+
+            // ✅ Ashini's Google Calendar API Integration
+            var calendarResult = await _calendarService.CreateInterviewCalendarEventAsync(
+                summary: $"Interview: {jobTitle} - CodeHouse",
+                description: $"Interview with {candidateName} for {jobTitle}.\nNotes: {request.Notes}",
+                location: string.IsNullOrWhiteSpace(request.Location) ? request.MeetingLink : request.Location,
+                startDateTime: request.InterviewDate,
+                durationMinutes: 60,
+                candidateEmail: candidateEmail,
+                recruiterEmail: recruiterEmail
+            );
+
+            string finalMeetingLink = !string.IsNullOrWhiteSpace(request.MeetingLink)
+                ? request.MeetingLink.Trim()
+                : (!string.IsNullOrWhiteSpace(calendarResult.MeetLink) ? calendarResult.MeetLink : "https://meet.google.com");
+
             Interview interview = new Interview
             {
                 JobApplicationId = application.Id,
                 ScheduledByUserId = userId,
                 InterviewDate = request.InterviewDate,
                 Mode = request.Mode.Trim(),
-                MeetingLink = request.MeetingLink.Trim(),
+                MeetingLink = finalMeetingLink,
                 Location = request.Location.Trim(),
                 Status = InterviewStatuses.Scheduled,
                 Notes = request.Notes.Trim(),
@@ -88,10 +113,13 @@ namespace RecruitmentPlatform.API.Controllers
                 .ThenInclude(c => c!.User)
                 .FirstAsync(i => i.Id == interview.Id);
 
+            var response = MapToResponse(interview);
+            response.GoogleCalendarEventUrl = calendarResult.HtmlLink;
+
             return Ok(new
             {
-                message = "Interview scheduled successfully.",
-                interview = MapToResponse(interview)
+                message = "Interview scheduled successfully and Google Calendar event created!",
+                interview = response
             });
         }
 

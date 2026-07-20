@@ -7,8 +7,6 @@ using RecruitmentPlatform.API.Data;
 using RecruitmentPlatform.API.Services;
 using Microsoft.Extensions.FileProviders;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add controllers
@@ -30,9 +28,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add CORS for React frontend
 builder.Services.AddCors(options =>
 {
+    // Added both named and default policies to ensure it works anywhere
     options.AddPolicy("ReactPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -77,8 +83,6 @@ builder.Services.AddAuthorization();
 // Add Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -103,9 +107,20 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Register Application Services
 builder.Services.AddScoped<AiMatchingService>();
+builder.Services.AddScoped<IEmailService, MockEmailService>();
+
+// ✅ Google Calendar Service (Ashini's Contribution Only)
+builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 
 var app = builder.Build();
+
+app.UseRouting();
+
+// ✅ CORS must be FIRST - before Swagger, auth, everything
+app.UseCors();
+app.UseCors("ReactPolicy");
 
 // Enable Swagger
 app.UseSwagger();
@@ -120,8 +135,6 @@ app.UseSwaggerUI(options =>
 // app.UseHttpsRedirection();
 
 app.UseStaticFiles();
-
-app.UseCors("ReactPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
