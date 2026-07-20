@@ -76,24 +76,7 @@ namespace RecruitmentPlatform.API.Controllers
 
             await _context.SaveChangesAsync();
 
-            // ✅ Real SMTP Email Service Trigger (Suhansa's Contribution)
-            string candidateEmail = application.CandidateProfile?.User?.Email ?? string.Empty;
-            string candidateName = application.CandidateProfile?.User?.FullName ?? "Candidate";
-            string jobTitle = application.JobPosting?.Title ?? "Position";
 
-            if (!string.IsNullOrWhiteSpace(candidateEmail))
-            {
-                await _emailService.SendInterviewInvitationEmailAsync(
-                    toEmail: candidateEmail,
-                    candidateName: candidateName,
-                    jobTitle: jobTitle,
-                    interviewDate: request.InterviewDate,
-                    mode: request.Mode,
-                    location: request.Location,
-                    meetingLink: request.MeetingLink,
-                    notes: request.Notes
-                );
-            }
 
             interview = await _context.Interviews
                 .Include(i => i.ScheduledByUser)
