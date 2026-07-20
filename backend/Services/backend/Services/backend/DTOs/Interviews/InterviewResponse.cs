@@ -1,1 +1,0 @@
-public string GoogleCalendarEventUrl { get; set; } = string.Empty;
