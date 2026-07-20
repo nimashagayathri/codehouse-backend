@@ -139,6 +139,9 @@ namespace RecruitmentPlatform.API.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
+                    b.Property<string>("ResumeText")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("ResumeUrl")
                         .IsRequired()
                         .HasMaxLength(500)
