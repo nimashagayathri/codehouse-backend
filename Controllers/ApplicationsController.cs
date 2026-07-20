@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -281,19 +281,15 @@ namespace RecruitmentPlatform.API.Controllers
 
             await _context.SaveChangesAsync();
 
-            // ✅ Send Application Status Update Email (Suhansa's Email Service)
+            // ✅ Send Application Status Update Email
             string candidateEmail = application.CandidateProfile?.User?.Email ?? string.Empty;
             string candidateName = application.CandidateProfile?.User?.FullName ?? "Candidate";
             string jobTitle = application.JobPosting?.Title ?? "Position";
 
             if (!string.IsNullOrWhiteSpace(candidateEmail))
             {
-                await _emailService.SendApplicationStatusUpdateEmailAsync(
-                    candidateEmail,
-                    candidateName,
-                    jobTitle,
-                    normalizedStatus
-                );
+                string body = $"Dear {candidateName},\n\nYour application for {jobTitle} has been updated to: {normalizedStatus}.\n\nPlease check your dashboard for more details.";
+                await _emailService.SendEmailAsync(candidateEmail, $"Application Status Update: {jobTitle}", body);
             }
 
             return Ok(new
