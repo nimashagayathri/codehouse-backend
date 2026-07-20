@@ -109,9 +109,8 @@ builder.Services.AddSwaggerGen(options =>
 // Register Application Services
 builder.Services.AddScoped<AiMatchingService>();
 
-// ✅ Register Real SMTP Email Service (Suhansa's Feature - Replacing MockEmailService)
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-builder.Services.AddScoped<IEmailService, EmailService>();
+// ✅ Register Real SMTP Email Service (Replacing MockEmailService)
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 var app = builder.Build();
 
