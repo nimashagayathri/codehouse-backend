@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas.Parser;
 using RecruitmentPlatform.API.Data;
 using RecruitmentPlatform.API.DTOs.Candidate;
 using RecruitmentPlatform.API.Helpers;
@@ -222,11 +224,36 @@ namespace RecruitmentPlatform.API.Controllers
 
             string fullResumeUrl = $"{Request.Scheme}://{Request.Host}{profile.ResumeUrl}";
 
+            string extractedText = "";
+            if (extension == ".pdf")
+            {
+                try
+                {
+                    using (var stream = file.OpenReadStream())
+                    using (var reader = new PdfReader(stream))
+                    using (var pdfDoc = new PdfDocument(reader))
+                    {
+                        for (int i = 1; i <= pdfDoc.GetNumberOfPages(); i++)
+                        {
+                            extractedText += PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(i)) + " ";
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[PDF Parser Error] {ex.Message}");
+                }
+            }
+
+            profile.ResumeText = !string.IsNullOrWhiteSpace(extractedText) ? extractedText : profile.ResumeText;
+            await _context.SaveChangesAsync();
+
             return Ok(new
             {
                 message = "Resume uploaded successfully.",
                 resumeUrl = profile.ResumeUrl,
                 fullResumeUrl,
+                extractedText,
                 profile = MapToResponse(profile)
             });
         }

@@ -88,34 +88,41 @@ namespace RecruitmentPlatform.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateJob(CreateJobRequest request)
         {
-            int userId = GetCurrentUserId();
-
-            JobPosting job = new JobPosting
+            try 
             {
-                Title = request.Title.Trim(),
-                Description = request.Description.Trim(),
-                RequiredSkills = request.RequiredSkills.Trim(),
-                Location = request.Location.Trim(),
-                Salary = request.Salary,
-                EmploymentType = request.EmploymentType.Trim(),
-                RecruiterId = userId,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                int userId = GetCurrentUserId();
 
-            _context.JobPostings.Add(job);
-            await _context.SaveChangesAsync();
+                JobPosting job = new JobPosting
+                {
+                    Title = request.Title.Trim(),
+                    Description = request.Description.Trim(),
+                    RequiredSkills = request.RequiredSkills.Trim(),
+                    Location = request.Location.Trim(),
+                    Salary = request.Salary,
+                    EmploymentType = request.EmploymentType.Trim(),
+                    RecruiterId = userId,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
 
-            job = await _context.JobPostings
-                .Include(j => j.Recruiter)
-                .FirstAsync(j => j.Id == job.Id);
+                _context.JobPostings.Add(job);
+                await _context.SaveChangesAsync();
 
-            return Ok(new
+                job = await _context.JobPostings
+                    .Include(j => j.Recruiter)
+                    .FirstAsync(j => j.Id == job.Id);
+
+                return Ok(new
+                {
+                    message = "Job posting created successfully.",
+                    job = MapToResponse(job)
+                });
+            }
+            catch (Exception ex)
             {
-                message = "Job posting created successfully.",
-                job = MapToResponse(job)
-            });
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [Authorize(Roles = "Recruiter,Admin")]

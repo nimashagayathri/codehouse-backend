@@ -26,6 +26,8 @@ namespace RecruitmentPlatform.API.Models
         [MaxLength(500)]
         public string ResumeUrl { get; set; } = string.Empty;
 
+        public string? ResumeText { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
