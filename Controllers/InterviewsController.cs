@@ -15,14 +15,14 @@ namespace RecruitmentPlatform.API.Controllers
     public class InterviewsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IGoogleCalendarService _calendarService; // ← Ashini's Google Calendar Service
+        private readonly IEmailService _emailService;
 
         public InterviewsController(
             ApplicationDbContext context,
-            IGoogleCalendarService calendarService) // ← Injected for Ashini
+            IEmailService emailService)
         {
             _context = context;
-            _calendarService = calendarService;
+            _emailService = emailService;
         }
 
         [Authorize(Roles = "Recruiter,Admin")]
@@ -40,10 +40,7 @@ namespace RecruitmentPlatform.API.Controllers
 
             if (application == null)
             {
-                return NotFound(new
-                {
-                    message = "Application not found."
-                });
+                return NotFound(new { message = "Application not found." });
             }
 
             if (!CanManageApplication(application, userId))
@@ -54,31 +51,8 @@ namespace RecruitmentPlatform.API.Controllers
             if (application.Status == ApplicationStatuses.Rejected ||
                 application.Status == ApplicationStatuses.Hired)
             {
-                return BadRequest(new
-                {
-                    message = "Cannot schedule interview for rejected or hired applications."
-                });
+                return BadRequest(new { message = "Cannot schedule interview for rejected or hired applications." });
             }
-
-            string candidateEmail = application.CandidateProfile?.User?.Email ?? string.Empty;
-            string candidateName = application.CandidateProfile?.User?.FullName ?? "Candidate";
-            string jobTitle = application.JobPosting?.Title ?? "Position";
-            string recruiterEmail = application.JobPosting?.Recruiter?.Email ?? string.Empty;
-
-            // ✅ Ashini's Google Calendar API Integration
-            var calendarResult = await _calendarService.CreateInterviewCalendarEventAsync(
-                summary: $"Interview: {jobTitle} - CodeHouse",
-                description: $"Interview with {candidateName} for {jobTitle}.\nNotes: {request.Notes}",
-                location: string.IsNullOrWhiteSpace(request.Location) ? request.MeetingLink : request.Location,
-                startDateTime: request.InterviewDate,
-                durationMinutes: 60,
-                candidateEmail: candidateEmail,
-                recruiterEmail: recruiterEmail
-            );
-
-            string finalMeetingLink = !string.IsNullOrWhiteSpace(request.MeetingLink)
-                ? request.MeetingLink.Trim()
-                : (!string.IsNullOrWhiteSpace(calendarResult.MeetLink) ? calendarResult.MeetLink : "https://meet.google.com");
 
             Interview interview = new Interview
             {
@@ -86,7 +60,7 @@ namespace RecruitmentPlatform.API.Controllers
                 ScheduledByUserId = userId,
                 InterviewDate = request.InterviewDate,
                 Mode = request.Mode.Trim(),
-                MeetingLink = finalMeetingLink,
+                MeetingLink = request.MeetingLink.Trim(),
                 Location = request.Location.Trim(),
                 Status = InterviewStatuses.Scheduled,
                 Notes = request.Notes.Trim(),
@@ -104,6 +78,25 @@ namespace RecruitmentPlatform.API.Controllers
 
             await _context.SaveChangesAsync();
 
+            // ✅ Real SMTP Email Service Trigger (Suhansa's Contribution)
+            string candidateEmail = application.CandidateProfile?.User?.Email ?? string.Empty;
+            string candidateName = application.CandidateProfile?.User?.FullName ?? "Candidate";
+            string jobTitle = application.JobPosting?.Title ?? "Position";
+
+            if (!string.IsNullOrWhiteSpace(candidateEmail))
+            {
+                await _emailService.SendInterviewInvitationEmailAsync(
+                    toEmail: candidateEmail,
+                    candidateName: candidateName,
+                    jobTitle: jobTitle,
+                    interviewDate: request.InterviewDate,
+                    mode: request.Mode,
+                    location: request.Location,
+                    meetingLink: request.MeetingLink,
+                    notes: request.Notes
+                );
+            }
+
             interview = await _context.Interviews
                 .Include(i => i.ScheduledByUser)
                 .Include(i => i.JobApplication)
@@ -113,13 +106,10 @@ namespace RecruitmentPlatform.API.Controllers
                 .ThenInclude(c => c!.User)
                 .FirstAsync(i => i.Id == interview.Id);
 
-            var response = MapToResponse(interview);
-            response.GoogleCalendarEventUrl = calendarResult.HtmlLink;
-
             return Ok(new
             {
-                message = "Interview scheduled successfully and Google Calendar event created!",
-                interview = response
+                message = "Interview scheduled successfully and confirmation email dispatched!",
+                interview = MapToResponse(interview)
             });
         }
 
@@ -136,10 +126,7 @@ namespace RecruitmentPlatform.API.Controllers
 
             if (application == null)
             {
-                return NotFound(new
-                {
-                    message = "Application not found."
-                });
+                return NotFound(new { message = "Application not found." });
             }
 
             if (!CanAccessApplication(application, userId))
@@ -178,8 +165,7 @@ namespace RecruitmentPlatform.API.Controllers
 
             if (User.IsInRole(UserRoles.Candidate))
             {
-                query = query.Where(i =>
-                    i.JobApplication!.CandidateProfile!.UserId == userId);
+                query = query.Where(i => i.JobApplication!.CandidateProfile!.UserId == userId);
             }
             else if (User.IsInRole(UserRoles.Recruiter))
             {
@@ -189,7 +175,6 @@ namespace RecruitmentPlatform.API.Controllers
             }
             else if (User.IsInRole(UserRoles.HiringManager) || User.IsInRole(UserRoles.Admin))
             {
-                // Hiring manager and admin can view all interviews.
             }
             else
             {
@@ -215,10 +200,7 @@ namespace RecruitmentPlatform.API.Controllers
 
             if (normalizedStatus == null)
             {
-                return BadRequest(new
-                {
-                    message = "Invalid status. Allowed statuses are Scheduled, Completed, Cancelled."
-                });
+                return BadRequest(new { message = "Invalid status. Allowed statuses are Scheduled, Completed, Cancelled." });
             }
 
             Interview? interview = await _context.Interviews
@@ -232,14 +214,10 @@ namespace RecruitmentPlatform.API.Controllers
 
             if (interview == null)
             {
-                return NotFound(new
-                {
-                    message = "Interview not found."
-                });
+                return NotFound(new { message = "Interview not found." });
             }
 
-            if (interview.JobApplication == null ||
-                !CanManageApplication(interview.JobApplication, userId))
+            if (interview.JobApplication == null || !CanManageApplication(interview.JobApplication, userId))
             {
                 return Forbid();
             }
@@ -259,37 +237,25 @@ namespace RecruitmentPlatform.API.Controllers
         private int GetCurrentUserId()
         {
             string? userIdText = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (!int.TryParse(userIdText, out int userId))
             {
                 throw new UnauthorizedAccessException("Invalid user token.");
             }
-
             return userId;
         }
 
         private bool CanAccessApplication(JobApplication application, int userId)
         {
-            if (User.IsInRole(UserRoles.Admin) || User.IsInRole(UserRoles.HiringManager))
-                return true;
-
-            if (User.IsInRole(UserRoles.Recruiter))
-                return application.JobPosting?.RecruiterId == userId;
-
-            if (User.IsInRole(UserRoles.Candidate))
-                return application.CandidateProfile?.UserId == userId;
-
+            if (User.IsInRole(UserRoles.Admin) || User.IsInRole(UserRoles.HiringManager)) return true;
+            if (User.IsInRole(UserRoles.Recruiter)) return application.JobPosting?.RecruiterId == userId;
+            if (User.IsInRole(UserRoles.Candidate)) return application.CandidateProfile?.UserId == userId;
             return false;
         }
 
         private bool CanManageApplication(JobApplication application, int userId)
         {
-            if (User.IsInRole(UserRoles.Admin) || User.IsInRole(UserRoles.HiringManager))
-                return true;
-
-            if (User.IsInRole(UserRoles.Recruiter))
-                return application.JobPosting?.RecruiterId == userId;
-
+            if (User.IsInRole(UserRoles.Admin) || User.IsInRole(UserRoles.HiringManager)) return true;
+            if (User.IsInRole(UserRoles.Recruiter)) return application.JobPosting?.RecruiterId == userId;
             return false;
         }
 

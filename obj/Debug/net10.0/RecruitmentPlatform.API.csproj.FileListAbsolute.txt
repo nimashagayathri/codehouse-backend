@@ -1,0 +1,9 @@
+C:\Users\SUHANSA\Documents\GitHub\codehouse-backend\obj\Debug\net10.0\RecruitmentPlatform.API.csproj.AssemblyReference.cache
+C:\Users\SUHANSA\Documents\GitHub\codehouse-backend\obj\Debug\net10.0\rpswa.dswa.cache.json
+C:\Users\SUHANSA\Documents\GitHub\codehouse-backend\obj\Debug\net10.0\RecruitmentPlatform.API.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\SUHANSA\Documents\GitHub\codehouse-backend\obj\Debug\net10.0\RecruitmentPlatform.API.AssemblyInfoInputs.cache
+C:\Users\SUHANSA\Documents\GitHub\codehouse-backend\obj\Debug\net10.0\RecruitmentPlatform.API.AssemblyInfo.cs
+C:\Users\SUHANSA\Documents\GitHub\codehouse-backend\obj\Debug\net10.0\RecruitmentPlatform.API.csproj.CoreCompileInputs.cache
+C:\Users\SUHANSA\Documents\GitHub\codehouse-backend\obj\Debug\net10.0\RecruitmentPlatform.API.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\SUHANSA\Documents\GitHub\codehouse-backend\obj\Debug\net10.0\RecruitmentPlatform.API.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\SUHANSA\Documents\GitHub\codehouse-backend\obj\Debug\net10.0\RecruitmentPlatform.API.sourcelink.json

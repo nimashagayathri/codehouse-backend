@@ -28,7 +28,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add CORS for React frontend
 builder.Services.AddCors(options =>
 {
-    // Added both named and default policies to ensure it works anywhere
     options.AddPolicy("ReactPolicy", policy =>
     {
         policy.AllowAnyOrigin()
@@ -109,16 +108,16 @@ builder.Services.AddSwaggerGen(options =>
 
 // Register Application Services
 builder.Services.AddScoped<AiMatchingService>();
-builder.Services.AddScoped<IEmailService, MockEmailService>();
 
-// ✅ Google Calendar Service (Ashini's Contribution Only)
-builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
+// ✅ Register Real SMTP Email Service (Suhansa's Feature - Replacing MockEmailService)
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 
 app.UseRouting();
 
-// ✅ CORS must be FIRST - before Swagger, auth, everything
+// CORS must be FIRST - before Swagger, auth, everything
 app.UseCors();
 app.UseCors("ReactPolicy");
 
@@ -130,9 +129,6 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "Recruitment Platform API v1");
     options.RoutePrefix = "swagger";
 });
-
-// Keep HTTPS redirection disabled while testing locally with HTTP/Postman
-// app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
