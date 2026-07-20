@@ -109,7 +109,7 @@ builder.Services.AddSwaggerGen(options =>
 // Register Application Services
 builder.Services.AddScoped<AiMatchingService>();
 
-// ✅ Register Real SMTP Email Service (Replacing MockEmailService)
+//  Register Real SMTP Email Service (Replacing MockEmailService)
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 var app = builder.Build();
