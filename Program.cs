@@ -111,7 +111,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddScoped<AiMatchingService>();
-builder.Services.AddScoped<IEmailService, MockEmailService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 var app = builder.Build();
 
