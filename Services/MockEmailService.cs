@@ -2,7 +2,7 @@ namespace RecruitmentPlatform.API.Services
 {
     public class MockEmailService : IEmailService
     {
-        public Task SendEmailAsync(string toEmail, string subject, string body)
+        public Task SendEmailAsync(string toEmail, string subject, string body, string? icsCalendarEvent = null)
         {
             // Simulate network delay
             Task.Delay(500).Wait();
